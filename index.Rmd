@@ -14,7 +14,7 @@ Preparing the dashboard based on the instructions given at
 @magallanes_reyes_data_2022, and @aden-buie_flexdashboard_2023. 
 
 You can find the code for this dashboard here:
-https://acc-umass.github.io/FinalProject-690V/
+https://github.com/ACC-UMASS/FinalProject-690V
 
 Alexandria Coombe  
 
