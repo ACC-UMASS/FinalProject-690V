@@ -1,0 +1,151 @@
+---
+title: "Univariate Numerical Data"
+author: "Alexandria Coombe"
+format: 
+  html: 
+    embed-resources: true
+    self-contained-math: true
+---
+
+```{r}
+cannabisDataset <- read.csv("cannabisDataset.csv",
+                        header = TRUE)
+head(cannabisDataset)
+```
+
+
+```{r}
+library(dplyr)
+library(stringr)
+
+cannabisDataset <- cannabisDataset %>%
+  mutate_all(str_squish)
+
+cannabisDataset <- cannabisDataset %>%
+ mutate_all(~ifelse(tolower(.) %in% c("yes", "Yes"), 1, ifelse(tolower(.) %in% c("no", "No"), 0, .)))
+```
+
+```{r}
+cannabisDataset <- cannabisDataset %>%
+  group_by(States, year) %>%
+  mutate(
+    cannabisLiberalization = case_when( 
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 0 & legalizedRecreationalMarijuana == 0 ~ "Decriminalized",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 0 ~ "Medicinal",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana == 0 & legalizedRecreationalMarijuana == 1 ~ "Recreational",
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 1 ~ "Fully Legal",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana== 0 & legalizedRecreationalMarijuana == 0 ~ "Fully Illegal",
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 0 & legalizedRecreationalMarijuana == 1 ~ "Recreational & Decriminalized",
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 0 ~ "Decriminalized & Medicinal",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 1 ~ "Medicinal & Recreational",
+      TRUE ~ "None"
+    )
+  ) %>%
+
+  select(-decriminalizedMarijuana, -legalizedMedicinalMarijuana, -legalizedRecreationalMarijuana)
+
+head(cannabisDataset)
+```
+
+
+```{r}
+cannabisDataset$crimeRate <- as.numeric(as.character(cannabisDataset$crimeRate))
+
+cannabisDataset$recidivismRate <- as.numeric(as.character(cannabisDataset$recidivismRate))
+
+cannabisDataset$population <- as.numeric(as.character(cannabisDataset$population))
+
+cannabisDataset$alcoholism <- as.numeric(as.character(cannabisDataset$alcoholism))
+
+cannabisDataset$unemploymentRate <- as.numeric(as.character(cannabisDataset$unemploymentRate))
+
+cannabisDataset$medianHouseholdIncome <- as.numeric(as.character(cannabisDataset$medianHouseholdIncome))
+```
+
+```{r}
+cannabisData2020 <- subset(cannabisDataset, year == 2020)
+```
+
+```{r}
+length(unique(cannabisData2020$crimeRate))
+summary(cannabisData2020$crimeRate)
+```
+
+
+```{r}
+length(unique(cannabisData2020$unemploymentRate))
+summary(cannabisData2020$unemploymentRate)
+```
+
+
+```{r}
+library(ggplot2)
+ggplot(cannabisData2020, aes(x = crimeRate, y = after_stat(density))) +
+    geom_histogram(binwidth = 20, fill = "skyblue", color = "black") +
+    ggtitle("Crime Rate Distribution in 2020") +
+  labs(subtitle = "Distribution of crime rates across states and D.C.") +
+  xlab("Crime Rate") +
+  ylab("Frequency") +
+  theme_minimal() +
+  scale_fill_manual(values = "skyblue", name = "Crime Rate")
+```
+
+```{r}
+ggplot(cannabisData2020, aes(x = crimeRate)) +
+  geom_histogram(binwidth = 80, fill = "skyblue", color = "black") +
+  ggtitle("Crime Rate Distribution in 2020") +
+  labs(subtitle = "Distribution of crime rates across states and D.C.",
+       x = "Crime Rate",
+       y = "Frequency") +
+  annotate("text", x = 4250, y = 1.2, label = "highest rates are outliers") +
+  theme_minimal()
+```
+
+```{r}
+crimeRate2020<-ggplot(cannabisData2020, aes(x = crimeRate)) +
+  geom_histogram(binwidth = 80, fill = "darkolivegreen", color = "black") +
+  ggtitle("Crime Rate Distribution in 2020") +
+  labs(subtitle = "Distribution of crime rates across states and D.C.",
+       x = "Crime Rate",
+       y = "Frequency") +
+  theme_minimal() +
+  labs(title = "Crime Rate Distribution in 2020",
+       subtitle = "Distribution of crime rates across states and D.C.",
+       caption = "Source: cannabisData2020")
+crimeRate2020
+```
+
+
+```{r}
+crimeRate2020Final <- ggplot(cannabisData2020, aes(x = crimeRate)) +
+  geom_histogram(binwidth = 80, fill = "darkolivegreen", color = "black") +
+  ggtitle("U.S Crime Rate Distribution in 2020") +
+  labs(subtitle = "Distribution of crime rates across states and D.C.",
+       x = "Crime Rate
+    (Crimes reported per 100,000 persons)",
+       y = "Frequency",
+       caption = "Source: cannabisData2020") +
+  theme_minimal() +
+  theme(plot.title = element_text(hjust = 0.5, size = 16, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5, size = 12),
+        plot.caption = element_text(hjust = 1, size = 8),
+        axis.title = element_text(size = 12),
+        axis.text = element_text(size = 10)) +
+  geom_vline(aes(xintercept = mean(crimeRate, na.rm = TRUE)), 
+             color = "black", linetype = "dotted", size = 1.5) +
+  annotate("text", x = mean(cannabisData2020$crimeRate, na.rm = TRUE) + 50, 
+           y = max(table(cut(cannabisData2020$crimeRate, breaks = seq(0, max(cannabisData2020$crimeRate, na.rm = TRUE), by = 80)))) - 0.5, 
+           label = paste(" Average\ncrime rate:
+", round(mean(cannabisData2020$crimeRate, na.rm = TRUE), 2)), 
+           color = "black", size = 3, hjust = -0.2)
+
+
+print(crimeRate2020Final)
+```
+
+```{r}
+saveRDS(crimeRate2020Final, file = "crimeRate2020Final.RDS")
+```
+
+
+

@@ -1,0 +1,61 @@
+---
+title: "DACSS 690V Deliverables"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+```
+
+## Intro {.sidebar}
+
+Preparing the dashboard based on the instructions given at 
+@magallanes_reyes_data_2022, and @aden-buie_flexdashboard_2023. 
+
+You can find the code for this dashboard here:
+https://github.com/ACC-UMASS/FinalProject-690V
+
+DACSS 690V Deliverable Dashboard
+
+## column {.tabset. tabset.fade}
+
+### Univariate Categorical Plot
+
+```{r}
+readRDS("liberalization2020PercentFinal.RDS")
+```
+
+
+### Univariate Numerical Plot
+
+```{r}
+readRDS("crimeRate2020New.RDS") 
+```
+
+
+### Bivariate Plot
+
+
+```{r}
+readRDS("bivariatePlotFinal.RDS")
+```
+
+
+### Choropleth Map
+
+```{r}
+readRDS("mapFinal.RDS")
+```
+
+
+### References:
+I created the cannabisData2020 dataset that was utilized for these plots. The data was collected from the following sources:
+FBI Uniform Crime Reporting program
+The FBI Crime Data Explorer 
+The United States Department of Justice 
+The Drug Enforcement Administration
+Each state’s government website
+The Federal Bureau of Prisons

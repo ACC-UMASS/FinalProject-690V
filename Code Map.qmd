@@ -1,0 +1,132 @@
+---
+title: "Map"
+author: "Alexandria Coombe"
+format: 
+  html: 
+    embed-resources: true
+    self-contained-math: true
+---
+
+```{r}
+install.packages("tigris")
+install.packages("sf")
+install.packages("ggplot2")
+install.packages("viridis")
+install.packages("readxl")
+```
+
+```{r}
+library(tigris)
+library(sf)
+library(ggplot2)
+library(viridis)
+library(readxl)
+```
+
+
+```{r}
+cannabisDataset <- read.csv("cannabisDataset.csv",
+                        header = TRUE)
+head(cannabisDataset)
+```
+
+```{r}
+library(dplyr)
+library(stringr)
+
+cannabisDataset <- cannabisDataset %>%
+  mutate_all(str_squish)
+
+cannabisDataset <- cannabisDataset %>%
+ mutate_all(~ifelse(tolower(.) %in% c("yes", "Yes"), 1, ifelse(tolower(.) %in% c("no", "No"), 0, .)))
+```
+
+```{r}
+cannabisDataset <- cannabisDataset %>%
+  group_by(States, year) %>%
+  mutate(
+    cannabisLiberalization = case_when( 
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 0 & legalizedRecreationalMarijuana == 0 ~ "Decriminalized",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 0 ~ "Medicinal",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana == 0 & legalizedRecreationalMarijuana == 1 ~ "Recreational",
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 1 ~ "Fully Legal",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana== 0 & legalizedRecreationalMarijuana == 0 ~ "Fully Illegal",
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 0 & legalizedRecreationalMarijuana == 1 ~ "Recreational & Decriminalized",
+      decriminalizedMarijuana == 1 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 0 ~ "Decriminalized & Medicinal",
+      decriminalizedMarijuana == 0 & legalizedMedicinalMarijuana == 1 & legalizedRecreationalMarijuana == 1 ~ "Medicinal & Recreational",
+      TRUE ~ "None"
+    )
+  ) %>%
+
+  select(-decriminalizedMarijuana, -legalizedMedicinalMarijuana, -legalizedRecreationalMarijuana)
+
+head(cannabisDataset)
+```
+
+```{r}
+cannabisDataset$crimeRate <- as.numeric(as.character(cannabisDataset$crimeRate))
+
+cannabisDataset$recidivismRate <- as.numeric(as.character(cannabisDataset$recidivismRate))
+
+cannabisDataset$population <- as.numeric(as.character(cannabisDataset$population))
+
+cannabisDataset$alcoholism <- as.numeric(as.character(cannabisDataset$alcoholism))
+
+cannabisDataset$unemploymentRate <- as.numeric(as.character(cannabisDataset$unemploymentRate))
+
+cannabisDataset$medianHouseholdIncome <- as.numeric(as.character(cannabisDataset$medianHouseholdIncome))
+```
+
+```{r}
+cannabisData2020 <- subset(cannabisDataset, year == 2020)
+```
+
+```{r}
+install.packages(c("sf", "ggplot2", "ggthemes"))
+library(sf)
+library(ggplot2)
+library(ggthemes)
+library(dplyr)
+
+```
+
+```{r}
+# Check the structure of the dataset
+str(cannabisData2020)
+
+# Check the number of columns
+ncol(cannabisData2020)
+```
+
+
+```{r}
+options(tigris_class = "sf")
+options(tigris_use_cache = TRUE)
+
+states_sf <- states(cb = TRUE)
+
+cannabisData2020$States <- tolower(cannabisData2020$States)
+states_sf$NAME <- tolower(states_sf$NAME)
+
+mergedData <- merge(states_sf, cannabisData2020, by.x = "NAME", by.y = "States",
+all.x = TRUE)
+
+ggplot(data = mergedData) +
+  geom_sf(aes(fill = crimeRate), color = "white", size = 0.2) +
+  scale_fill_gradientn(colors = c("#056444", "#ABDB7F", "#EBEF50",
+"#FFA500", "#FF0000"),
+                       name = "Crime Rate",
+                       limits = c(min(mergedData$crimeRate, na.rm =
+TRUE), max(mergedData$crimeRate, na.rm = TRUE)),
+                       breaks = pretty(mergedData$crimeRate, n = 5),
+                       labels = scales::comma) +
+  labs(title = "Crime Rate by State",
+       subtitle = "2020",
+       caption = "Source: cannabisData2020") +
+theme_minimal() +
+  coord_sf(xlim = c(-125, -66), ylim = c(24, 50), expand = FALSE) +
+  theme(plot.caption = element_text(hjust = 0.5, face = "italic",
+color = "gray40", size = 10))
+```
+
+
